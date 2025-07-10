@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: vite-app
-          image: ghcr.io/YOUR_USERNAME/vite-app:latest
+          image: ghcr.io/cheetahbyte/qubear:latest
           ports:
             - containerPort: 80
