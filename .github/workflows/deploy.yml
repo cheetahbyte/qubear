@@ -1,0 +1,40 @@
+name: Build & Deploy Vite App to Kubernetes
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: vite-app
+  IMAGE_TAG: latest
+  REGISTRY: ghcr.io
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t $REGISTRY/${{ github.repository_owner }}/$IMAGE_NAME:$IMAGE_TAG .
+
+      - name: Push Docker image
+        run: docker push $REGISTRY/${{ github.repository_owner }}/$IMAGE_NAME:$IMAGE_TAG
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "latest"
+
+      - name: Write Kubeconfig to file
+        run: echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > kubeconfig.yaml
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl --kubeconfig=kubeconfig.yaml apply -f kube/
